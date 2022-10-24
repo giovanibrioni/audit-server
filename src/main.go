@@ -3,35 +3,21 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/giovanibrioni/audit-server/adapter"
 	"github.com/giovanibrioni/audit-server/audit"
-	"github.com/go-redis/redis"
+	"github.com/giovanibrioni/audit-server/helper"
 	"github.com/google/uuid"
 )
 
-func GetEnvOrDefault(envVar, defaultValue string) string {
-	if v, ok := os.LookupEnv(envVar); ok && len(v) > 0 {
-		return v
-	}
-	return defaultValue
-}
-
 func main() {
 
-	dbURL := GetEnvOrDefault("REDIS_URL", "localhost:6379")
-	redisPassword := GetEnvOrDefault("REDIS_PASSWORD", "")
-	db := redisConnect(dbURL, redisPassword)
-	defer db.Close()
-
-	auditRepo := adapter.NewRedisAuditRepository(db)
+	auditRepo := adapter.StorageFactory(helper.GetEnvOrDefault("STORAGE_TYPE", "stdout"))
 
 	router := initRouter(auditRepo)
-	router.Run(":" + GetEnvOrDefault("SERVER_PORT", "8080"))
+	router.Run(":" + helper.GetEnvOrDefault("SERVER_PORT", "8080"))
 
 }
 
@@ -77,20 +63,4 @@ func initRouter(repo audit.AuditRepo) *gin.Engine {
 	})
 
 	return r
-}
-
-func redisConnect(url string, password string) *redis.Client {
-
-	client := redis.NewClient(&redis.Options{
-		Addr:     url,
-		Password: password,
-		DB:       0,
-	})
-	err := client.Ping().Err()
-
-	if err != nil {
-		log.Fatal(err)
-	}
-	return client
-
 }

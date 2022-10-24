@@ -5,22 +5,27 @@ import (
 	"log"
 
 	"github.com/giovanibrioni/audit-server/audit"
+	"github.com/giovanibrioni/audit-server/helper"
+
 	"github.com/go-redis/redis"
 )
 
 const redisKey = "audit_logs"
 
-type auditRepository struct {
+type redisAuditRepository struct {
 	connection *redis.Client
 }
 
-func NewRedisAuditRepository(connection *redis.Client) audit.AuditRepo {
-	return &auditRepository{
-		connection,
+func NewRedisAuditRepository() audit.AuditRepo {
+	dbURL := helper.GetEnvOrDefault("REDIS_URL", "localhost:6379")
+	redisPassword := helper.GetEnvOrDefault("REDIS_PASSWORD", "")
+	rconn := redisConnect(dbURL, redisPassword)
+	return &redisAuditRepository{
+		connection: rconn,
 	}
 }
 
-func (r *auditRepository) PersistLogs(auditLog *audit.AuditEntity) error {
+func (r *redisAuditRepository) PersistLogs(auditLog *audit.AuditEntity) error {
 
 	encoded, err := json.Marshal(auditLog)
 	if err != nil {
@@ -33,4 +38,19 @@ func (r *auditRepository) PersistLogs(auditLog *audit.AuditEntity) error {
 	}
 
 	return nil
+}
+
+func redisConnect(url string, password string) *redis.Client {
+	client := redis.NewClient(&redis.Options{
+		Addr:     url,
+		Password: password,
+		DB:       0,
+	})
+	err := client.Ping().Err()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	return client
+
 }
