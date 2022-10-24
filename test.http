@@ -1,0 +1,9 @@
+GET http://localhost:8080/ping
+###
+
+
+POST http://localhost:8080/batch-audit
+Content-Type: application/json
+  
+[{"service":{"updated_at":1666077920,"write_timeout":60000,"host":"129.153.98.232","connect_timeout":60000,"name":"book-store-service","retries":5,"port":8080,"enabled":true,"protocol":"http","tags":[],"read_timeout":60000,"id":"4bce5799-3127-492f-baae-e2672c0a1e55","ws_id":"899e0d91-2b05-495e-bf74-8426a6b43155","created_at":1666077688},"route":{"updated_at":1666077712,"https_redirect_status_code":426,"paths":["/book-store"],"protocols":["http","https"],"name":"book-store-route","preserve_host":false,"regex_priority":0,"path_handling":"v1","strip_path":true,"request_buffering":true,"id":"a510ebe5-ba62-4c94-a0b1-d020fa07a57a","response_buffering":true,"service":{"id":"4bce5799-3127-492f-baae-e2672c0a1e55"},"ws_id":"899e0d91-2b05-495e-bf74-8426a6b43155","created_at":1666077712},"client_ip":"10.244.3.1","started_at":1666545795138,"response":{"body":{"type":"json","data":[{"title":"Harry Potter AAA","author":"J. K. Rowling","id":"1"},{"title":"The Lord of the Rings","author":"J. R. R. Tolkien","id":"2"},{"title":"The Wizard of Oz","author":"L. Frank Baum","id":"3"}]},"size":417,"headers":{"connection":"close","via":"kong/2.8.1","x-kong-proxy-latency":"38","content-type":"application/json; charset=utf-8","date":"Sun, 23 Oct 2022 17:23:15 GMT","x-kong-upstream-latency":"5","content-length":"198"},"status":200},"latencies":{"proxy":5,"request":43,"kong":38},"request":{"querystring":{},"method":"GET","size":155,"url":"http://api-px.pocs.dev.br:80/book-store/books","headers":{"connection":"keep-alive","host":"api-px.pocs.dev.br","accept-encoding":"gzip, deflate","user-agent":"HTTPie/3.2.1","accept":"*/*"},"uri":"/book-store/books"},"tries":[{"ip":"129.153.98.232","balancer_latency":0,"port":8080,"balancer_start":1666545795176}],"upstream_uri":"/books"}]
+###

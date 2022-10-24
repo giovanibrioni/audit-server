@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: audit-server
+  name: audit-server 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: audit-server
+  template:
+    metadata:
+      labels:
+        app: audit-server
+    spec:
+      containers:
+      - image: giovanibrioni/audit-server
+        env:
+        - name: REDIS_URL
+          value: redis-master.redis.svc.cluster.local:6379
+        - name: REDIS_PASSWORD
+          value: redis
+        resources:
+          limits:
+            cpu: 2000m
+            memory: 1000Mi
+          requests:
+            cpu: 50m
+            memory: 50Mi
+        name: audit-server 
+        ports:
+        - containerPort: 8080

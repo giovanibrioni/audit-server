@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  redis-server: 
+    container_name: redis-server
+    image: 'redis'
+    ports:
+      - "6379:6379"
+    networks: 
+      - audit-net
+  audit-server:
+    container_name: audit-server
+    environment:
+      - SERVER_PORT=8080
+      - REDIS_URL=redis-server:6379
+      - REDIS_PASSWORD=
+    build: .
+    ports:
+      - "8080:8080"
+    restart: on-failure
+    depends_on:
+      - redis-server
+    networks: 
+      - audit-net
+networks:
+  audit-net:
