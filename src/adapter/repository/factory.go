@@ -1,10 +1,10 @@
-package adapter
+package repository
 
 import (
 	"github.com/giovanibrioni/audit-server/audit"
 )
 
-func StorageFactory(storageType string) audit.AuditRepo {
+func Factory(storageType string) audit.AuditRepo {
 	switch storageType {
 	case "redis":
 		return NewRedisAuditRepository()

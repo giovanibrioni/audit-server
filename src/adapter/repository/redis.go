@@ -1,4 +1,4 @@
-package adapter
+package repository
 
 import (
 	"encoding/json"
@@ -25,8 +25,7 @@ func NewRedisAuditRepository() audit.AuditRepo {
 	}
 }
 
-func (r *redisAuditRepository) PersistLogs(auditLog *audit.AuditEntity) error {
-
+func (r *redisAuditRepository) Save(auditLog *audit.AuditEntity) error {
 	encoded, err := json.Marshal(auditLog)
 	if err != nil {
 		log.Fatal("Unable to marshal auditLogs")

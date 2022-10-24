@@ -8,5 +8,5 @@ type AuditEntity struct {
 }
 
 type AuditRepo interface {
-	PersistLogs(auditEntity *AuditEntity) error
+	Save(auditEntity *AuditEntity) error
 }

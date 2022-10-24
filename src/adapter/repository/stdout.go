@@ -1,4 +1,4 @@
-package adapter
+package repository
 
 import (
 	"encoding/json"
@@ -13,7 +13,7 @@ func NewStdoutAuditRepository() audit.AuditRepo {
 	return &stdoutAuditRepository{}
 }
 
-func (r *stdoutAuditRepository) PersistLogs(auditLog *audit.AuditEntity) error {
+func (r *stdoutAuditRepository) Save(auditLog *audit.AuditEntity) error {
 
 	encoded, err := json.Marshal(auditLog)
 	if err != nil {
