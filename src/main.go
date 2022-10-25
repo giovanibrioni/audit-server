@@ -1,21 +1,27 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/giovanibrioni/audit-server/adapter/api"
 	"github.com/giovanibrioni/audit-server/adapter/repository"
-
 	"github.com/giovanibrioni/audit-server/helper"
+)
+
+var (
+	storageType = helper.GetEnvOrDefault("STORAGE_TYPE", "stdout")
+	serverPort  = helper.GetEnvOrDefault("SERVER_PORT", "8080")
 )
 
 func main() {
 
-	auditRepo := repository.Factory(helper.GetEnvOrDefault("STORAGE_TYPE", "stdout"))
+	auditRepo := repository.Factory(storageType)
 	auditHandler := api.NewAuditHandler(auditRepo)
 	router := initRouter(auditHandler)
-	router.Run(":" + helper.GetEnvOrDefault("SERVER_PORT", "8080"))
+	log.Printf("\nStorate Type setting to: %s\n", storageType)
+	router.Run(":" + serverPort)
 
 }
 
