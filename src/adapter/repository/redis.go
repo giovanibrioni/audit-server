@@ -10,7 +10,7 @@ import (
 	"github.com/go-redis/redis"
 )
 
-const redisKey = "audit_logs"
+var redisKey = helper.GetEnvOrDefault("REDIS_KEY", "audit_logs")
 
 type redisAuditRepository struct {
 	connection *redis.Client

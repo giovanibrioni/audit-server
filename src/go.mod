@@ -13,11 +13,11 @@ require (
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.10.0 // indirect
-	github.com/klauspost/compress v1.15.7 // indirect
-	github.com/pierrec/lz4/v4 v4.1.15 // indirect
+
 )
 
 require (
+	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/goccy/go-json v0.9.7 // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -28,7 +28,6 @@ require (
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/onsi/gomega v1.22.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.1 // indirect
-	github.com/segmentio/kafka-go v0.4.35
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect

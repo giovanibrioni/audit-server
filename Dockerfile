@@ -2,10 +2,14 @@ FROM --platform=$BUILDPLATFORM golang:1.18-alpine AS builder
 
 WORKDIR /app
 COPY ./src ./
-#RUN apk update && apk add bash ca-certificates git gcc g++ libc-dev librdkafka-dev pkgconf
+#############JUST FOR KAFKA####################################
+RUN apk add --no-cache git
+RUN apk add librdkafka-dev pkgconf build-base
+#############JUST FOR KAFKA####################################
+
 RUN go mod download
 ARG TARGETOS TARGETARCH
-RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /out/audit-server .
+RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build -tags musl -o /out/audit-server .
 
 FROM alpine as runner
 WORKDIR /app

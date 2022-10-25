@@ -21,8 +21,14 @@ spec:
           value: redis-master.redis.svc.cluster.local:6379
         - name: REDIS_PASSWORD
           value: redis
+        - name: REDIS_KEY
+          value: audit_logs
         - name: STORAGE_TYPE
           value: redis
+        - name: KAFKA_URL
+          value: kafka.kafka.svc.cluster.local:9092
+        - name: KAFKA_TOPIC
+          value: audit_logs
         resources:
           limits:
             cpu: 2000m
