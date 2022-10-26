@@ -1,1 +1,1 @@
-docker run --rm -i --network host loadimpact/k6 run - <script.js
+docker run --rm -i --network host loadimpact/k6 run - <./k6-loadtest/script.js

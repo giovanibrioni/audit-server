@@ -1,8 +1,12 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 export let options = {
-    vus: 1,
+    vus: 20,
     duration: '60s',
+    thresholds: {
+        http_req_failed: ['rate<0.001'], // http errors should be less than 0,1%
+        http_req_duration: ['p(99.9) < 100'], // 95% of requests should be below 100ms
+    },
 };
 
 
@@ -18,6 +22,6 @@ export default function () {
 
     let res = http.post('http://host.docker.internal:8080/audit/batch', payload, params)
     //console.log(`Status: ${res.status}, Body: ${res.body}`);
-    check(res, { 'status was 200': (r) => r.status == 200 });
+    //check(res, { 'status was 200': (r) => r.status == 200 });
     //sleep(1);
 }
