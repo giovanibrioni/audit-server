@@ -20,7 +20,7 @@ func main() {
 	auditRepo := repository.Factory(storageType)
 	auditHandler := api.NewAuditHandler(auditRepo)
 	router := initRouter(auditHandler)
-	log.Printf("\nStorate Type setting to: %s\n", storageType)
+	log.Printf("\nStorage Type setting to: %s\n", storageType)
 	router.Run(":" + serverPort)
 
 }

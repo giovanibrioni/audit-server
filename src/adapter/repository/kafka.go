@@ -40,23 +40,25 @@ func NewKafkaAuditRepository() audit.AuditRepo {
 	}
 }
 
-func (k *kafkaAuditRepository) Save(auditLog *audit.AuditEntity) error {
-	encoded, err := json.Marshal(auditLog)
-	if err != nil {
-		log.Fatal("Unable to marshal auditLogs")
-		return err
-	}
-	err = k.producer.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &k.topic, Partition: kafka.PartitionAny},
-		Value:          []byte(encoded),
-	}, nil)
-	if err != nil {
-		if err.(kafka.Error).Code() == kafka.ErrQueueFull {
-			// Producer queue is full, wait 1s for messages
-			// to be delivered then try again.
-			time.Sleep(time.Second)
+func (k *kafkaAuditRepository) SaveBatch(auditLogs []*audit.AuditEntity) error {
+	for _, auditLog := range auditLogs {
+		encoded, err := json.Marshal(auditLog)
+		if err != nil {
+			log.Fatal("Unable to marshal auditLogs")
+			return err
 		}
-		log.Printf("Failed to produce message: %v\n", err)
+		err = k.producer.Produce(&kafka.Message{
+			TopicPartition: kafka.TopicPartition{Topic: &k.topic, Partition: kafka.PartitionAny},
+			Value:          []byte(encoded),
+		}, nil)
+		if err != nil {
+			if err.(kafka.Error).Code() == kafka.ErrQueueFull {
+				// Producer queue is full, wait 1s for messages
+				// to be delivered then try again.
+				time.Sleep(time.Second)
+			}
+			log.Printf("Failed to produce message: %v\n", err)
+		}
 	}
 
 	return nil

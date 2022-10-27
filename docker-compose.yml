@@ -16,7 +16,7 @@ services:
     cpus: 1
     environment:
       - SERVER_PORT=8080
-      - STORAGE_TYPE=stdout
+      - STORAGE_TYPE=kafka
       - REDIS_URL=redis-server:6379
       - REDIS_PASSWORD=
       - REDIS_KEY=audit_logs

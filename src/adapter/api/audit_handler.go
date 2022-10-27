@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
@@ -24,16 +25,25 @@ func (a *AuditHandler) PostBatch(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
+		return
 	}
 	if err := c.Request.Body.Close(); err != nil {
 		panic(err)
 	}
-	jobId, err := audit.NewPersistBatchUseCase(a.repo).Execute(reqBody)
-
+	var rawMessages []map[string]any
+	err = json.Unmarshal([]byte(reqBody), &rawMessages)
+	if err != nil || len(rawMessages) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Request body should be a list",
+		})
+		return
+	}
+	jobId, err := audit.NewPersistBatchUseCase(a.repo).Execute(rawMessages)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
+		return
 	}
 	c.JSON(http.StatusCreated, gin.H{
 		"job_id": jobId,

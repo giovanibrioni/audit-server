@@ -1,7 +1,6 @@
 package audit
 
 import (
-	"encoding/json"
 	"log"
 
 	"github.com/google/uuid"
@@ -15,20 +14,20 @@ func NewPersistBatchUseCase(auditRepo AuditRepo) *PersistBatchUseCase {
 	return &PersistBatchUseCase{Repo: auditRepo}
 }
 
-func (p *PersistBatchUseCase) Execute(reqBody []byte) (uuid.UUID, error) {
-
+func (p *PersistBatchUseCase) Execute(rawMessages []map[string]any) (uuid.UUID, error) {
+	var auditLogs []*AuditEntity
 	jobId := uuid.New()
-	auditId := uuid.New()
-	var rawMessages []map[string]any
-
-	json.Unmarshal([]byte(reqBody), &rawMessages)
-
-	auditLog := &AuditEntity{
-		AuditId:     auditId,
-		RawMessages: rawMessages,
+	for _, v := range rawMessages {
+		auditId := uuid.New()
+		auditLog := &AuditEntity{
+			JobId:      jobId,
+			AuditId:    auditId,
+			RawMessage: v,
+		}
+		auditLogs = append(auditLogs, auditLog)
 	}
 
-	err := p.Repo.Save(auditLog)
+	err := p.Repo.SaveBatch(auditLogs)
 	if err != nil {
 		log.Fatal(err)
 	}
