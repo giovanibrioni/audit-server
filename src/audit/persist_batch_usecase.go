@@ -17,13 +17,14 @@ func NewPersistBatchUseCase(auditRepo AuditRepo) *PersistBatchUseCase {
 
 func (p *PersistBatchUseCase) Execute(reqBody []byte) (uuid.UUID, error) {
 
-	audit_id := uuid.New()
+	jobId := uuid.New()
+	auditId := uuid.New()
 	var rawMessages []map[string]any
 
 	json.Unmarshal([]byte(reqBody), &rawMessages)
 
 	auditLog := &AuditEntity{
-		ID:          audit_id,
+		AuditId:     auditId,
 		RawMessages: rawMessages,
 	}
 
@@ -32,6 +33,6 @@ func (p *PersistBatchUseCase) Execute(reqBody []byte) (uuid.UUID, error) {
 		log.Fatal(err)
 	}
 
-	return audit_id, nil
+	return jobId, nil
 
 }

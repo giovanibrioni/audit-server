@@ -28,7 +28,7 @@ func (a *AuditHandler) PostBatch(c *gin.Context) {
 	if err := c.Request.Body.Close(); err != nil {
 		panic(err)
 	}
-	audit_id, err := audit.NewPersistBatchUseCase(a.repo).Execute(reqBody)
+	jobId, err := audit.NewPersistBatchUseCase(a.repo).Execute(reqBody)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -36,6 +36,6 @@ func (a *AuditHandler) PostBatch(c *gin.Context) {
 		})
 	}
 	c.JSON(http.StatusCreated, gin.H{
-		"audit_id": audit_id,
+		"job_id": jobId,
 	})
 }
