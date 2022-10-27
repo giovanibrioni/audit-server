@@ -5,7 +5,7 @@ metadata:
     app: audit-server
   name: audit-server 
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: audit-server
@@ -16,6 +16,7 @@ spec:
     spec:
       containers:
       - image: giovanibrioni/audit-server
+        imagePullPolicy: Always
         env:
         - name: REDIS_URL
           value: redis-master.redis.svc.cluster.local:6379

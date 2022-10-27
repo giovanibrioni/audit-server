@@ -13,25 +13,29 @@ import (
 var redisKey = helper.GetEnvOrDefault("REDIS_KEY", "audit_logs")
 
 type redisAuditRepository struct {
-	connection *redis.Client
+	client *redis.Client
 }
 
 func NewRedisAuditRepository() audit.AuditRepo {
 	dbURL := helper.GetEnvOrDefault("REDIS_URL", "localhost:6379")
 	redisPassword := helper.GetEnvOrDefault("REDIS_PASSWORD", "")
-	rconn := redisConnect(dbURL, redisPassword)
+	rcli := redisClient(dbURL, redisPassword)
 	return &redisAuditRepository{
-		connection: rconn,
+		client: rcli,
 	}
 }
 
-func (r *redisAuditRepository) Save(auditLog *audit.AuditEntity) error {
-	encoded, err := json.Marshal(auditLog)
-	if err != nil {
-		log.Fatal("Unable to marshal auditLogs")
-		return err
+func (r *redisAuditRepository) SaveBatch(auditLogs []*audit.AuditEntity) error {
+	var s []string
+	for _, auditLog := range auditLogs {
+		encoded, err := json.Marshal(auditLog)
+		if err != nil {
+			log.Fatal("Unable to marshal auditLogs")
+			return err
+		}
+		s = append(s, string(encoded))
 	}
-	err = r.connection.RPush(redisKey, encoded).Err()
+	err := r.client.RPush(redisKey, s).Err()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -39,7 +43,7 @@ func (r *redisAuditRepository) Save(auditLog *audit.AuditEntity) error {
 	return nil
 }
 
-func redisConnect(url string, password string) *redis.Client {
+func redisClient(url string, password string) *redis.Client {
 	client := redis.NewClient(&redis.Options{
 		Addr:     url,
 		Password: password,

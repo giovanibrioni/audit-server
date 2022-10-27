@@ -13,14 +13,15 @@ func NewStdoutAuditRepository() audit.AuditRepo {
 	return &stdoutAuditRepository{}
 }
 
-func (r *stdoutAuditRepository) Save(auditLog *audit.AuditEntity) error {
-
-	encoded, err := json.Marshal(auditLog)
-	if err != nil {
-		log.Fatal("Unable to marshal auditLogs")
-		return err
+func (r *stdoutAuditRepository) SaveBatch(auditLogs []*audit.AuditEntity) error {
+	for _, auditLog := range auditLogs {
+		encoded, err := json.Marshal(auditLog)
+		if err != nil {
+			log.Fatal("Unable to marshal auditLogs")
+			return err
+		}
+		log.Print(string(encoded))
 	}
-	log.Print(string(encoded))
 
 	return nil
 }

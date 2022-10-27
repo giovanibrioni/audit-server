@@ -9,7 +9,6 @@ export let options = {
     },
 };
 
-
 export default function () {
     var params = {
         headers: {
