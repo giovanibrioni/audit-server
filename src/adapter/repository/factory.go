@@ -10,6 +10,8 @@ func Factory(storageType string) audit.AuditRepo {
 		return NewKafkaAuditRepository()
 	case "redis":
 		return NewRedisAuditRepository()
+	case "amqp":
+		return NewAmqpAuditRepository()
 	default:
 		return NewStdoutAuditRepository()
 	}

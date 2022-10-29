@@ -1,6 +1,28 @@
 version: '3'
 
 services:
+  audit-server:
+    container_name: audit-server
+    mem_limit: 1024m
+    cpus: 1
+    environment:
+      - SERVER_PORT=8080
+      - STORAGE_TYPE=redis
+      - REDIS_URL=redis-server:6379
+      - REDIS_PASSWORD=
+      - REDIS_KEY=audit_logs
+      - KAFKA_URL=kafka-broker:29092
+      - KAFKA_TOPIC=audit_logs
+      - AMQP_SERVER_URL=amqp://guest:guest@rabbitmq-broker:5672/
+      - AMQP_QUEUE=audit_logs
+    build: .
+    ports:
+      - "8080:8080"
+    restart: on-failure
+    depends_on:
+      - redis-server
+    networks: 
+      - audit-net
   redis-server: 
     container_name: redis-server
     mem_limit: 1024m
@@ -10,27 +32,20 @@ services:
       - "6379:6379"
     networks: 
       - audit-net
-  audit-server:
-    container_name: audit-server
+  rabbitmq-broker:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq-broker
     mem_limit: 1024m
     cpus: 1
-    environment:
-      - SERVER_PORT=8080
-      - STORAGE_TYPE=kafka
-      - REDIS_URL=redis-server:6379
-      - REDIS_PASSWORD=
-      - REDIS_KEY=audit_logs
-      - KAFKA_URL=kafka-broker:29092
-      - KAFKA_TOPIC=audit_logs
-    build: .
     ports:
-      - "8080:8080"
-    restart: on-failure
-    depends_on:
-      - redis-server
-    networks: 
+      - 5672:5672   # for sender and consumer connections
+      - 15672:15672 # for serve RabbitMQ GUI
+    volumes:
+      - ${HOME}/dev-rabbitmq/data/:/var/lib/rabbitmq
+      - ${HOME}/dev-rabbitmq/log/:/var/log/rabbitmq
+    restart: always
+    networks:
       - audit-net
-
   zookeeper:
     image: confluentinc/cp-zookeeper:7.0.1
     container_name: zookeeper
