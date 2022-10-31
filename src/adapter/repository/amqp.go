@@ -7,45 +7,46 @@ import (
 
 	"github.com/giovanibrioni/audit-server/audit"
 	"github.com/giovanibrioni/audit-server/helper"
-	"github.com/streadway/amqp"
+	rabbitmq "github.com/wagslane/go-rabbitmq"
 )
 
 type AmqpAuditRepository struct {
-	channel *amqp.Channel
-	queue   string
-	ctx     context.Context
+	publisher *rabbitmq.Publisher
+	queue     string
+	ctx       context.Context
 }
 
 func NewAmqpAuditRepository() audit.AuditRepo {
 	amqpServerURL := helper.GetEnvOrDefault("AMQP_SERVER_URL", "amqp://guest:guest@localhost:5672/")
 	queue := helper.GetEnvOrDefault("AMQP_QUEUE", "audit_logs")
 
-	// Create a new RabbitMQ connection.
-	connectRabbitMQ, err := amqp.Dial(amqpServerURL)
-	if err != nil {
-		panic(err)
-	}
-
-	channelRabbitMQ, err := connectRabbitMQ.Channel()
-	if err != nil {
-		panic(err)
-	}
-	_, err = channelRabbitMQ.QueueDeclare(
-		queue, // queue name
-		true,  // durable
-		false, // auto delete
-		false, // exclusive
-		false, // no wait
-		nil,   // arguments
+	publisher, err := rabbitmq.NewPublisher(
+		amqpServerURL,
+		rabbitmq.Config{},
+		rabbitmq.WithPublisherOptionsLogging,
+		rabbitmq.WithPublisherOptionsReconnectInterval(0),
 	)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
+		//panic(err)
 	}
+	returns := publisher.NotifyReturn()
+	go func() {
+		for r := range returns {
+			log.Printf("failed to publish message: %s, on rabbitmq queue: %s", string(r.Body), queue)
+		}
+	}()
+	confirmations := publisher.NotifyPublish()
+	go func() {
+		for c := range confirmations {
+			log.Printf("message confirmed from server. queue: %s, tag: %v, ack: %v.", queue, c.DeliveryTag, c.Ack)
+		}
+	}()
 
 	return &AmqpAuditRepository{
-		channel: channelRabbitMQ,
-		queue:   queue,
-		ctx:     context.Background(),
+		publisher: publisher,
+		queue:     queue,
+		ctx:       context.Background(),
 	}
 }
 
@@ -56,19 +57,15 @@ func (a *AmqpAuditRepository) SaveBatch(auditLogs []*audit.AuditEntity) error {
 			log.Fatal("Unable to marshal auditLogs")
 			return err
 		}
-		message := amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        []byte(encoded),
-		}
-		err = a.channel.Publish(
-			"",      // exchange
-			a.queue, // queue name
-			false,   // mandatory
-			false,   // immediate
-			message,
+		err = a.publisher.Publish(
+			[]byte(encoded),
+			[]string{a.queue},
+			rabbitmq.WithPublishOptionsContentType("application/json"),
+			rabbitmq.WithPublishOptionsMandatory,
+			rabbitmq.WithPublishOptionsPersistentDelivery,
 		)
 		if err != nil {
-			log.Fatal("Failed to Publish message: ", err)
+			log.Fatalf("failed to publish message on RabbitMq: JobId: %s, AuditId: %s, error: %s", auditLog.JobId, auditLog.AuditId, err)
 			return err
 		}
 	}

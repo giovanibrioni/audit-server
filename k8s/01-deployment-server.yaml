@@ -5,7 +5,7 @@ metadata:
     app: audit-server
   name: audit-server 
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: audit-server
@@ -16,7 +16,6 @@ spec:
     spec:
       containers:
       - image: giovanibrioni/audit-server
-        imagePullPolicy: Always
         env:
         - name: REDIS_URL
           value: redis-master.redis.svc.cluster.local:6379
@@ -25,10 +24,14 @@ spec:
         - name: REDIS_KEY
           value: audit_logs
         - name: STORAGE_TYPE
-          value: redis
+          value: stdout
         - name: KAFKA_URL
           value: kafka.kafka.svc.cluster.local:9092
         - name: KAFKA_TOPIC
+          value: audit_logs
+        - name: AMQP_SERVER_URL
+          value: amqp://guest:guest@rabbitmq.rabbitmq.svc.cluster.local:5672/
+        - name: AMQP_QUEUE
           value: audit_logs
         resources:
           limits:
