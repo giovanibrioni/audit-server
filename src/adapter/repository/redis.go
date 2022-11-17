@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"log"
 	"strconv"
@@ -41,16 +42,20 @@ func (r *redisAuditRepository) SaveBatch(auditLogs []*audit.AuditEntity) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	log.Printf("AuditLog with jobId: %s, inserted on redisKey: %s", auditLogs[0].JobId, redisKey)
 	return nil
 }
 
 func redisClient(url string, password string, db string) *redis.Client {
+	log.Printf("Trying to connect on redis database url: %s, db: %s", url, db)
 	dbInt, err := strconv.Atoi(db)
 	if err != nil {
 		log.Fatal(err)
 	}
 	client := redis.NewClient(&redis.Options{
+		TLSConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
 		Addr:     url,
 		Password: password,
 		DB:       dbInt,
