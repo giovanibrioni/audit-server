@@ -3,6 +3,7 @@ package repository
 import (
 	"encoding/json"
 	"log"
+	"strconv"
 
 	"github.com/giovanibrioni/audit-server/audit"
 	"github.com/giovanibrioni/audit-server/helper"
@@ -19,7 +20,8 @@ type redisAuditRepository struct {
 func NewRedisAuditRepository() audit.AuditRepo {
 	dbURL := helper.GetEnvOrDefault("REDIS_URL", "localhost:6379")
 	redisPassword := helper.GetEnvOrDefault("REDIS_PASSWORD", "")
-	rcli := redisClient(dbURL, redisPassword)
+	redisDB := helper.GetEnvOrDefault("REDIS_DB", "0")
+	rcli := redisClient(dbURL, redisPassword, redisDB)
 	return &redisAuditRepository{
 		client: rcli,
 	}
@@ -43,17 +45,21 @@ func (r *redisAuditRepository) SaveBatch(auditLogs []*audit.AuditEntity) error {
 	return nil
 }
 
-func redisClient(url string, password string) *redis.Client {
-	client := redis.NewClient(&redis.Options{
-		Addr:     url,
-		Password: password,
-		DB:       0,
-	})
-	err := client.Ping().Err()
-
+func redisClient(url string, password string, db string) *redis.Client {
+	dbInt, err := strconv.Atoi(db)
 	if err != nil {
 		log.Fatal(err)
 	}
+	client := redis.NewClient(&redis.Options{
+		Addr:     url,
+		Password: password,
+		DB:       dbInt,
+	})
+	err = client.Ping().Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Connected to redis database url: %s, db: %s", url, db)
 	return client
 
 }

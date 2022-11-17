@@ -23,6 +23,8 @@ spec:
           value: redis
         - name: REDIS_KEY
           value: audit_logs
+        - name: REDIS_DB
+          value: 0
         - name: STORAGE_TYPE
           value: stdout
         - name: KAFKA_URL
