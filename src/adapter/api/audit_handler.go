@@ -1,9 +1,10 @@
 package api
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/goccy/go-json"
 
 	"github.com/gin-gonic/gin"
 	"github.com/giovanibrioni/audit-server/audit"

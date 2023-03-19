@@ -2,23 +2,26 @@ package repository
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"os"
 	"time"
 
+	"github.com/goccy/go-json"
+
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/giovanibrioni/audit-server/audit"
 	"github.com/giovanibrioni/audit-server/helper"
+	"go.uber.org/zap"
 )
 
 type kafkaAuditRepository struct {
 	producer *kafka.Producer
 	topic    string
 	ctx      context.Context
+	logger   *zap.SugaredLogger
 }
 
-func NewKafkaAuditRepository() audit.AuditRepo {
+func NewKafkaAuditRepository(ctx context.Context, logger *zap.SugaredLogger) audit.AuditRepo {
 	bootstrapServers := helper.GetEnvOrDefault("KAFKA_URL", "localhost:9092")
 	topic := helper.GetEnvOrDefault("KAFKA_TOPIC", "audit_logs")
 	config := kafka.ConfigMap{"bootstrap.servers": bootstrapServers, "acks": "1", "allow.auto.create.topics": true}
@@ -26,17 +29,18 @@ func NewKafkaAuditRepository() audit.AuditRepo {
 	p, err := kafka.NewProducer(&config)
 
 	if err != nil {
-		log.Printf("Failed to create producer: %s\n", err)
+		logger.Infof("Failed to create producer: %s\n", err)
 		os.Exit(1)
 	}
 
 	// Listen to all the events on the default events channel
-	go listenKafkaEvents(p)
+	go listenKafkaEvents(p, logger)
 
 	return &kafkaAuditRepository{
 		producer: p,
 		topic:    topic,
-		ctx:      context.Background(),
+		ctx:      ctx,
+		logger:   logger,
 	}
 }
 
@@ -57,14 +61,14 @@ func (k *kafkaAuditRepository) SaveBatch(auditLogs []*audit.AuditEntity) error {
 				// to be delivered then try again.
 				time.Sleep(time.Second)
 			}
-			log.Printf("Failed to produce message: %v\n", err)
+			k.logger.Errorf("Failed to produce message: %v\n", err)
 		}
 	}
 
 	return nil
 }
 
-func listenKafkaEvents(p *kafka.Producer) {
+func listenKafkaEvents(p *kafka.Producer, logger *zap.SugaredLogger) {
 	for e := range p.Events() {
 		switch ev := e.(type) {
 		case *kafka.Message:
@@ -74,15 +78,15 @@ func listenKafkaEvents(p *kafka.Producer) {
 			// is already configured to do that.
 			m := ev
 			if m.TopicPartition.Error != nil {
-				log.Printf("Delivery failed: %v\n", m.TopicPartition.Error)
+				logger.Errorf("Delivery failed: %v\n", m.TopicPartition.Error)
 			} else {
-				log.Printf("Delivered message to topic %s [%d] at offset %v\n",
+				logger.Errorf("Delivered message to topic %s [%d] at offset %v\n",
 					*m.TopicPartition.Topic, m.TopicPartition.Partition, m.TopicPartition.Offset)
 			}
 		case kafka.Error:
-			log.Printf("Error: %v\n", ev)
+			logger.Errorf("Error: %v\n", ev)
 		default:
-			log.Printf("Ignored event: %s\n", ev)
+			logger.Errorf("Ignored event: %s\n", ev)
 		}
 	}
 }

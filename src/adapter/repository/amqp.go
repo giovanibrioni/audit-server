@@ -2,21 +2,23 @@ package repository
 
 import (
 	"context"
-	"encoding/json"
-	"log"
+
+	"github.com/goccy/go-json"
 
 	"github.com/giovanibrioni/audit-server/audit"
 	"github.com/giovanibrioni/audit-server/helper"
 	rabbitmq "github.com/wagslane/go-rabbitmq"
+	"go.uber.org/zap"
 )
 
 type AmqpAuditRepository struct {
 	publisher *rabbitmq.Publisher
 	queue     string
 	ctx       context.Context
+	logger    *zap.SugaredLogger
 }
 
-func NewAmqpAuditRepository() audit.AuditRepo {
+func NewAmqpAuditRepository(ctx context.Context, logger *zap.SugaredLogger) audit.AuditRepo {
 	amqpServerURL := helper.GetEnvOrDefault("AMQP_SERVER_URL", "amqp://guest:guest@localhost:5672/")
 	queue := helper.GetEnvOrDefault("AMQP_QUEUE", "audit_logs")
 
@@ -27,26 +29,27 @@ func NewAmqpAuditRepository() audit.AuditRepo {
 		rabbitmq.WithPublisherOptionsReconnectInterval(0),
 	)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 		//panic(err)
 	}
 	returns := publisher.NotifyReturn()
 	go func() {
 		for r := range returns {
-			log.Printf("failed to publish message: %s, on rabbitmq queue: %s", string(r.Body), queue)
+			logger.Errorf("failed to publish message: %s, on rabbitmq queue: %s", string(r.Body), queue)
 		}
 	}()
 	confirmations := publisher.NotifyPublish()
 	go func() {
 		for c := range confirmations {
-			log.Printf("message confirmed from server. queue: %s, tag: %v, ack: %v.", queue, c.DeliveryTag, c.Ack)
+			logger.Errorf("message confirmed from server. queue: %s, tag: %v, ack: %v.", queue, c.DeliveryTag, c.Ack)
 		}
 	}()
 
 	return &AmqpAuditRepository{
 		publisher: publisher,
 		queue:     queue,
-		ctx:       context.Background(),
+		ctx:       ctx,
+		logger:    logger,
 	}
 }
 
@@ -54,7 +57,7 @@ func (a *AmqpAuditRepository) SaveBatch(auditLogs []*audit.AuditEntity) error {
 	for _, auditLog := range auditLogs {
 		encoded, err := json.Marshal(auditLog)
 		if err != nil {
-			log.Fatal("Unable to marshal auditLogs")
+			a.logger.Fatal("Unable to marshal auditLogs")
 			return err
 		}
 		err = a.publisher.Publish(
@@ -65,7 +68,7 @@ func (a *AmqpAuditRepository) SaveBatch(auditLogs []*audit.AuditEntity) error {
 			rabbitmq.WithPublishOptionsPersistentDelivery,
 		)
 		if err != nil {
-			log.Fatalf("failed to publish message on RabbitMq: JobId: %s, AuditId: %s, error: %s", auditLog.JobId, auditLog.AuditId, err)
+			a.logger.Fatalf("failed to publish message on RabbitMq: JobId: %s, AuditId: %s, error: %s", auditLog.JobId, auditLog.AuditId, err)
 			return err
 		}
 	}

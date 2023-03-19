@@ -1,26 +1,34 @@
 package repository
 
 import (
-	"encoding/json"
-	"log"
+	"context"
+
+	"github.com/goccy/go-json"
 
 	"github.com/giovanibrioni/audit-server/audit"
+	"go.uber.org/zap"
 )
 
-type stdoutAuditRepository struct{}
-
-func NewStdoutAuditRepository() audit.AuditRepo {
-	return &stdoutAuditRepository{}
+type stdoutAuditRepository struct {
+	ctx    context.Context
+	logger *zap.SugaredLogger
 }
 
-func (r *stdoutAuditRepository) SaveBatch(auditLogs []*audit.AuditEntity) error {
+func NewStdoutAuditRepository(ctx context.Context, logger *zap.SugaredLogger) audit.AuditRepo {
+	return &stdoutAuditRepository{
+		ctx:    ctx,
+		logger: logger,
+	}
+}
+
+func (s *stdoutAuditRepository) SaveBatch(auditLogs []*audit.AuditEntity) error {
 	for _, auditLog := range auditLogs {
 		encoded, err := json.Marshal(auditLog)
 		if err != nil {
-			log.Fatal("Unable to marshal auditLogs")
+			s.logger.Fatal("Unable to marshal auditLogs")
 			return err
 		}
-		log.Print(string(encoded))
+		s.logger.Info(string(encoded))
 	}
 
 	return nil

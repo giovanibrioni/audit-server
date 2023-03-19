@@ -7,11 +7,13 @@ services:
     cpus: 1
     environment:
       - SERVER_PORT=8080
+      - LOGGER_LOG_LEVEL=DEBUG
       - STORAGE_TYPE=redis
       - REDIS_URL=redis-server:6379
       - REDIS_PASSWORD=
       - REDIS_DB=0
       - REDIS_KEY=audit_logs
+      - REDIS_ENABLE_TLS=false
       - KAFKA_URL=kafka-broker:29092
       - KAFKA_TOPIC=audit_logs
       - AMQP_SERVER_URL=amqp://guest:guest@rabbitmq-broker:5672/
