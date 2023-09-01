@@ -59,6 +59,44 @@ Than start audit server
 docker-compose up -d audit-server
 ```
 
+## STORAGE_TYPE=rabbitmq
+The rabbitmq is configured as following
+```bash
+  audit-server:
+    environment:
+      - STORAGE_TYPE=amqp
+      - AMQP_SERVER_URL=amqp://guest:guest@rabbitmq-broker:5672/
+      - AMQP_QUEUE=audit_logs
+```
+Starting Rabbitmq
+```bash
+docker-compose up -d rabbitmq-broker
+```
+
+Than start audit server
+```bash
+docker-compose up -d audit-server
+```
+
+## STORAGE_TYPE=postgres
+The postgres is configured as following
+```bash
+  audit-server:
+    environment:
+      - STORAGE_TYPE=postgres
+      - POSTGRES_URL=postgresql://user:pass@postgres-db:5432/audit?sslmode=disable
+      - DB_MAX_CONN=10
+```
+Starting Postres
+```bash
+docker-compose up -d postgres-db
+```
+
+Than start audit server
+```bash
+docker-compose up -d audit-server
+```
+
 ## Generate load
 To measure results with more precision, the continer cpu and memory are limited as following:
 ```bash

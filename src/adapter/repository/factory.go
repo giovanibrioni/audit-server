@@ -1,18 +1,23 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/giovanibrioni/audit-server/audit"
+	"go.uber.org/zap"
 )
 
-func Factory(storageType string) audit.AuditRepo {
+func Factory(ctx context.Context, logger *zap.SugaredLogger, storageType string) audit.AuditRepo {
 	switch storageType {
 	case "kafka":
-		return NewKafkaAuditRepository()
+		return NewKafkaAuditRepository(ctx, logger)
 	case "redis":
-		return NewRedisAuditRepository()
+		return NewRedisAuditRepository(ctx, logger)
 	case "amqp":
-		return NewAmqpAuditRepository()
+		return NewAmqpAuditRepository(ctx, logger)
+	case "postgres":
+		return NewPostgresAuditRepository(ctx, logger)
 	default:
-		return NewStdoutAuditRepository()
+		return NewStdoutAuditRepository(ctx, logger)
 	}
 }

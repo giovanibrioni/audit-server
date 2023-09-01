@@ -18,6 +18,8 @@ services:
       - KAFKA_TOPIC=audit_logs
       - AMQP_SERVER_URL=amqp://guest:guest@rabbitmq-broker:5672/
       - AMQP_QUEUE=audit_logs
+      - POSTGRES_URL=postgresql://user:pass@postgres-db:5432/audit?sslmode=disable
+      - DB_MAX_CONN=10
     build: .
     ports:
       - "8080:8080"
@@ -78,5 +80,24 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+  postgres-db:
+    mem_limit: 1024m
+    cpus: 2
+    container_name: postgres-audit-db
+    image: postgres:13.7-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: audit
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "user"]
+      interval: 30s
+      timeout: 3s
+      retries: 5
+    networks: 
+      - audit-net
 networks:
   audit-net:
